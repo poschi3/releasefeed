@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
+	"log"
+	"time"
 )
 
 // Template
@@ -26,12 +28,22 @@ import (
 // </feed>
 
 type Feed struct {
-	XMLName xml.Name `xml:"http://www.w3.org/2005/Atom feed"`
-	Author  Author   `xml:"author"`
-	Title   string   `xml:"title"`
-	Id      string   `xml:"id"`      // TODO
-	Updated string   `xml:"updated"` // TODO
-	Entries []Entry  `xml:"entry"`
+	XMLName xml.Name       `xml:"http://www.w3.org/2005/Atom feed"`
+	Author  Author         `xml:"author"`
+	Title   string         `xml:"title"`
+	Id      string         `xml:"id"` // TODO
+	Updated FeedTimeformat `xml:"updated"`
+	Entries []Entry        `xml:"entry"`
+}
+
+type FeedTimeformat struct {
+	time.Time
+}
+
+// MarshalXML implements the xml.Marshaler interface
+func (ct FeedTimeformat) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	formattedTime := ct.Format(time.RFC3339)
+	return e.EncodeElement(formattedTime, start)
 }
 
 type Author struct {
@@ -39,56 +51,52 @@ type Author struct {
 }
 
 type Entry struct {
-	Title   string `xml:"title"`
-	Link    Link   `xml:"link"`    // TODO
-	Id      string `xml:"id"`      // TODO
-	Updated string `xml:"updated"` // TODO
-	Summary string `xml:"summary"`
-	Content string `xml:"content"`
+	Title   string         `xml:"title"`
+	Link    Link           `xml:"link"` // TODO
+	Id      string         `xml:"id"`   // TODO
+	Updated FeedTimeformat `xml:"updated"`
+	Summary string         `xml:"summary"`
+	Content string         `xml:"content,omitempty"`
 }
 
 type Link struct {
 	Href string `xml:"href,attr"`
 }
 
-func feedCycle(cycle Cycle) string {
+func feedCycle(productName string, cycle Cycle) string {
 	feed := Feed{
-		Author: Author{
-			Name: "ReleaseFeed",
-		},
-		Title:   "Bla",
-		Id:      "TODO",
-		Updated: "xxx",
+		Author:  Author{Name: "ReleaseFeed"},
+		Title:   fmt.Sprintf("%s (%s)", productName, cycle.Cycle),
+		Id:      "urn:uuid:00000000-0000-0000-0000-000000000000", // TODO
+		Updated: FeedTimeformat{Time: time.Now()},                //.Format(time.RFC3339),                 // TODO
 		Entries: []Entry{
-			createCycle(cycle),
+			createCycleEntry(productName, cycle),
 		},
 	}
 
 	output, err := xml.MarshalIndent(feed, "", "  ")
 	if err != nil {
-		fmt.Printf("Error encoding XML: %v\n", err)
+		log.Printf("Error encoding XML: %v\n", err)
 		return "" // TODO was machen
 	}
 
 	// TODO
 	// <?xml version="1.0" encoding="utf-8"?>
 
-	fmt.Println(string(output))
+	// log.Println(string(output))
 	return string(output)
 }
 
-func feedProduct(product Product) string {
+func feedProduct(productName string, product Product) string {
 	feed := Feed{
-		Author: Author{
-			Name: "ReleaseFeed",
-		},
-		Title:   "Bla",
-		Id:      "TODO",
-		Updated: "xxx",
+		Author:  Author{Name: "ReleaseFeed"},
+		Title:   productName,
+		Id:      "urn:uuid:00000000-0000-0000-0000-000000000000", // TODO
+		Updated: FeedTimeformat{Time: time.Now()},                // TODO
 	}
 
 	for _, cycle := range product {
-		feedCycle := createCycle(cycle)
+		feedCycle := createCycleEntry(productName, cycle)
 		feed.Entries = append(feed.Entries, feedCycle)
 		// builder.WriteString(c.format())
 		// builder.WriteString("\n")
@@ -96,21 +104,30 @@ func feedProduct(product Product) string {
 
 	output, err := xml.MarshalIndent(feed, "", "  ")
 	if err != nil {
-		fmt.Printf("Error encoding XML: %v\n", err)
+		log.Printf("Error encoding XML: %v\n", err)
 		return "" // TODO was machen
 	}
 
 	// TODO
 	// <?xml version="1.0" encoding="utf-8"?>
 
-	fmt.Println(string(output))
+	// log.Println(string(output))
 	return string(output)
 }
 
-func createCycle(cycle Cycle) Entry {
+func createCycleEntry(productName string, cycle Cycle) Entry {
+	summary := fmt.Sprintf(
+		"%s %s updated to %s (%s). Support until %s",
+		productName, cycle.Cycle, cycle.Latest, cycle.LatestReleaseDate.Time.Format("2006-01-02"), cycle.Eol.asString(),
+	)
+
 	return Entry{
 		Title:   cycle.Latest,
+		Id:      "urn:uuid:00000000-0000-0000-0000-000000000000",
 		Link:    Link{Href: "http://example.com"},
-		Summary: cycle.format(),
+		Summary: summary,
+		Updated: FeedTimeformat{Time: time.Now()}, // TODO
 	}
 }
+
+// time.RFC3339

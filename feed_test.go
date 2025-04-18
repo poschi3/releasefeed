@@ -21,7 +21,7 @@ func TestFeedCycle(t *testing.T) {
 		},
 		Latest: "1.39.12",
 	}
-	feed := feedCycle(testCycle)
+	feed := feedCycle("mediawiki", testCycle)
 	t.Log(feed)
-	t.Errorf("foo")
+
 }
