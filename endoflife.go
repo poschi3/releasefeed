@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 const baseUrl = "https://endoflife.date/api/"
@@ -41,26 +42,38 @@ func (bos *BoolOrString) UnmarshalJSON(data []byte) error {
 }
 
 type Cycle struct {
-	Cycle       string
-	ReleaseDate string
-	Eol         BoolOrString
-	Latest      string
-	Link        string
+	Cycle             string
+	ReleaseDate       string
+	LatestReleaseDate string
+	Eol               BoolOrString
+	Latest            string
+	Link              string
 	// Lts          bool
 	// Support      string
 	// Discontinued string
 }
 
+func (c Cycle) format() string {
+	return fmt.Sprintf("Cycle %s has %s on %s (until %s)", c.Cycle, c.Latest, c.LatestReleaseDate, c.Eol.asString())
+}
+
 func (c Cycle) print(w io.Writer) {
-	fmt.Fprintf(w, "Version %s on %s (until %s)\n", c.Latest, c.ReleaseDate, c.Eol.asString())
+	fmt.Fprint(w, c.format())
 }
 
 type Product []Cycle
 
-func (p Product) print(w io.Writer) {
+func (p Product) format() string {
+	var builder strings.Builder
 	for _, c := range p {
-		c.print(w)
+		builder.WriteString(c.format())
+		builder.WriteString("\n")
 	}
+	return builder.String()
+}
+
+func (p Product) print(w io.Writer) {
+	fmt.Fprint(w, p.format())
 }
 
 func getProduct(product string) Product {
@@ -94,6 +107,10 @@ func getCycle(product string, cicle string) Cycle {
 	err = json.NewDecoder(resp.Body).Decode(&myCicle)
 	if err != nil {
 		panic(err) // TODO
+	}
+
+	if myCicle.Cycle == "" {
+		myCicle.Cycle = cicle
 	}
 	// myCicle.print(os.Stdout)
 	return myCicle

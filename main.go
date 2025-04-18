@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -13,12 +14,16 @@ func main() {
 func handleProduct(w http.ResponseWriter, req *http.Request) {
 	productName := req.PathValue("product")
 	product := getProduct(productName)
-	product.print(w)
+	// product.print(w)
+	res := feedProduct(product)
+	fmt.Fprint(w, res)
 }
 
 func handleCycle(w http.ResponseWriter, req *http.Request) {
 	productName := req.PathValue("product")
 	cycleName := req.PathValue("cycle")
 	cycle := getCycle(productName, cycleName)
-	cycle.print(w)
+	//cycle.print(w)
+	res := feedCycle(cycle)
+	fmt.Fprint(w, res)
 }
