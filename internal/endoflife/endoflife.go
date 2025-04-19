@@ -1,4 +1,4 @@
-package main
+package endoflife
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ type BoolOrString struct {
 	IsString    bool
 }
 
-func (bos BoolOrString) asString() string {
+func (bos BoolOrString) AsString() string {
 	if bos.IsString {
 		return bos.StringValue
 	} else {
@@ -75,7 +75,7 @@ type Cycle struct {
 
 type Product []Cycle
 
-func getProduct(product string) Product {
+func GetProduct(product string) Product {
 	resp, err := http.Get(baseUrl + product + ".json")
 	if err != nil {
 		panic(err)
@@ -93,7 +93,7 @@ func getProduct(product string) Product {
 	return myProduct
 }
 
-func getCycle(product string, cicle string) Cycle {
+func GetCycle(product string, cicle string) Cycle {
 	resp, err := http.Get(baseUrl + product + "/" + cicle + ".json")
 	if err != nil {
 		panic(err)

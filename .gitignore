@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-releasefeed
+/releasefeed
 __debug_bin*
 
 # Test binary, built with `go test -c`

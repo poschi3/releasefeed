@@ -1,6 +1,7 @@
-package main
+package feed
 
 import (
+	"poschi3/releasefeed/internal/endoflife"
 	"testing"
 )
 
@@ -13,15 +14,15 @@ import (
 func TestFeedCycle(t *testing.T) {
 	t.Log("fssoo")
 
-	testCycle := Cycle{
+	testCycle := endoflife.Cycle{
 		Cycle:       "1.39",
 		ReleaseDate: "2025-04-10",
-		Eol: BoolOrString{
+		Eol: endoflife.BoolOrString{
 			StringValue: "2025-11-30",
 		},
 		Latest: "1.39.12",
 	}
-	feed := feedCycle("mediawiki", testCycle)
+	feed := FeedCycle("mediawiki", testCycle)
 	t.Log(feed)
 
 }

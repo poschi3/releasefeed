@@ -1,9 +1,10 @@
-package main
+package feed
 
 import (
 	"encoding/xml"
 	"fmt"
 	"log"
+	"poschi3/releasefeed/internal/endoflife"
 	"time"
 )
 
@@ -63,7 +64,8 @@ type Link struct {
 	Href string `xml:"href,attr"`
 }
 
-func feedCycle(productName string, cycle Cycle) string {
+func FeedCycle(productName string, cycle endoflife.Cycle) string {
+
 	feed := Feed{
 		Author:  Author{Name: "ReleaseFeed"},
 		Title:   fmt.Sprintf("%s (%s)", productName, cycle.Cycle),
@@ -87,7 +89,7 @@ func feedCycle(productName string, cycle Cycle) string {
 	return string(output)
 }
 
-func feedProduct(productName string, product Product) string {
+func FeedProduct(productName string, product endoflife.Product) string {
 	feed := Feed{
 		Author:  Author{Name: "ReleaseFeed"},
 		Title:   productName,
@@ -115,10 +117,10 @@ func feedProduct(productName string, product Product) string {
 	return string(output)
 }
 
-func createCycleEntry(productName string, cycle Cycle) Entry {
+func createCycleEntry(productName string, cycle endoflife.Cycle) Entry {
 	summary := fmt.Sprintf(
 		"%s %s updated to %s (%s). Support until %s",
-		productName, cycle.Cycle, cycle.Latest, cycle.LatestReleaseDate.Time.Format("2006-01-02"), cycle.Eol.asString(),
+		productName, cycle.Cycle, cycle.Latest, cycle.LatestReleaseDate.Time.Format("2006-01-02"), cycle.Eol.AsString(),
 	)
 
 	return Entry{
@@ -129,5 +131,3 @@ func createCycleEntry(productName string, cycle Cycle) Entry {
 		Updated: FeedTimeformat{Time: time.Now()}, // TODO
 	}
 }
-
-// time.RFC3339
