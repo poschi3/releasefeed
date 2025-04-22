@@ -22,7 +22,7 @@ func TestFeedCycle(t *testing.T) {
 		},
 		Latest: "1.39.12",
 	}
-	feed := FeedCycle("mediawiki", testCycle)
+	feed := FeedCycle("localhost", "mediawiki", testCycle)
 	t.Log(feed)
 
 }

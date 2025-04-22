@@ -28,11 +28,13 @@ import (
 //   </entry>
 // </feed>
 
+const baseUri = "https://endoflife.date/"
+
 type Feed struct {
 	XMLName xml.Name       `xml:"http://www.w3.org/2005/Atom feed"`
 	Author  Author         `xml:"author"`
 	Title   string         `xml:"title"`
-	Id      string         `xml:"id"` // TODO
+	Id      string         `xml:"id"`
 	Updated FeedTimeformat `xml:"updated"`
 	Entries []Entry        `xml:"entry"`
 }
@@ -53,8 +55,8 @@ type Author struct {
 
 type Entry struct {
 	Title   string         `xml:"title"`
-	Link    Link           `xml:"link"` // TODO
-	Id      string         `xml:"id"`   // TODO
+	Link    Link           `xml:"link"`
+	Id      string         `xml:"id"`
 	Updated FeedTimeformat `xml:"updated"`
 	Summary string         `xml:"summary"`
 	Content string         `xml:"content,omitempty"`
@@ -64,15 +66,14 @@ type Link struct {
 	Href string `xml:"href,attr"`
 }
 
-func FeedCycle(productName string, cycle endoflife.Cycle) string {
-
+func FeedCycle(host string, productName string, cycle endoflife.Cycle) string {
 	feed := Feed{
 		Author:  Author{Name: "ReleaseFeed"},
 		Title:   fmt.Sprintf("%s (%s)", productName, cycle.Cycle),
-		Id:      "urn:uuid:00000000-0000-0000-0000-000000000000", // TODO
-		Updated: FeedTimeformat{Time: time.Now()},                //.Format(time.RFC3339),                 // TODO
+		Id:      getCycleTag(host, productName, cycle),
+		Updated: FeedTimeformat{Time: cycle.LatestReleaseDate.Time},
 		Entries: []Entry{
-			createCycleEntry(productName, cycle),
+			createCycleEntry(host, productName, cycle),
 		},
 	}
 
@@ -84,25 +85,25 @@ func FeedCycle(productName string, cycle endoflife.Cycle) string {
 
 	// TODO
 	// <?xml version="1.0" encoding="utf-8"?>
-
-	// log.Println(string(output))
 	return string(output)
 }
 
-func FeedProduct(productName string, product endoflife.Product) string {
+func FeedProduct(host string, productName string, product endoflife.Product) string {
 	feed := Feed{
-		Author:  Author{Name: "ReleaseFeed"},
-		Title:   productName,
-		Id:      "urn:uuid:00000000-0000-0000-0000-000000000000", // TODO
-		Updated: FeedTimeformat{Time: time.Now()},                // TODO
+		Author: Author{Name: "ReleaseFeed"},
+		Title:  productName,
+		Id:     "https://" + host + "/" + productName,
 	}
 
+	var latestUpdate time.Time
 	for _, cycle := range product {
-		feedCycle := createCycleEntry(productName, cycle)
+		feedCycle := createCycleEntry(host, productName, cycle)
 		feed.Entries = append(feed.Entries, feedCycle)
-		// builder.WriteString(c.format())
-		// builder.WriteString("\n")
+		if cycle.LatestReleaseDate.Time.After(latestUpdate) {
+			latestUpdate = cycle.LatestReleaseDate.Time
+		}
 	}
+	feed.Updated = FeedTimeformat{Time: latestUpdate}
 
 	output, err := xml.MarshalIndent(feed, "", "  ")
 	if err != nil {
@@ -112,12 +113,10 @@ func FeedProduct(productName string, product endoflife.Product) string {
 
 	// TODO
 	// <?xml version="1.0" encoding="utf-8"?>
-
-	// log.Println(string(output))
 	return string(output)
 }
 
-func createCycleEntry(productName string, cycle endoflife.Cycle) Entry {
+func createCycleEntry(host string, productName string, cycle endoflife.Cycle) Entry {
 	summary := fmt.Sprintf(
 		"%s %s updated to %s (%s). Support until %s",
 		productName, cycle.Cycle, cycle.Latest, cycle.LatestReleaseDate.Time.Format("2006-01-02"), cycle.Eol.AsString(),
@@ -125,9 +124,13 @@ func createCycleEntry(productName string, cycle endoflife.Cycle) Entry {
 
 	return Entry{
 		Title:   cycle.Latest,
-		Id:      "urn:uuid:00000000-0000-0000-0000-000000000000",
-		Link:    Link{Href: "http://example.com"},
+		Id:      getCycleTag(host, productName, cycle),
+		Link:    Link{Href: baseUri + productName},
 		Summary: summary,
-		Updated: FeedTimeformat{Time: time.Now()}, // TODO
+		Updated: FeedTimeformat{Time: cycle.LatestReleaseDate.Time},
 	}
+}
+
+func getCycleTag(host string, productName string, cycle endoflife.Cycle) string {
+	return "tag:" + host + "," + cycle.LatestReleaseDate.Time.Format("2006-01-02") + ":" + productName + ":" + cycle.Latest
 }

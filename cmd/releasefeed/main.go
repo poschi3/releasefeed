@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"poschi3/releasefeed/internal/endoflife"
 	"poschi3/releasefeed/internal/feed"
+	"strings"
 )
 
 func main() {
@@ -16,14 +16,10 @@ func main() {
 
 func handleProduct(w http.ResponseWriter, req *http.Request) {
 	// TODO sanitation
-	log.Println(req.URL)
 	productName := req.PathValue("product")
 	product := endoflife.GetProduct(productName)
-
-	w.Header().Add("content-type", "application/atom+xml; charset=UTF-8")
-
-	feed := feed.FeedProduct(productName, product)
-	fmt.Fprintln(w, feed)
+	feed := feed.FeedProduct(strings.Split(req.Host, ":")[0], productName, product)
+	writeFeed(w, feed)
 }
 
 func handleCycle(w http.ResponseWriter, req *http.Request) {
@@ -31,8 +27,11 @@ func handleCycle(w http.ResponseWriter, req *http.Request) {
 	productName := req.PathValue("product")
 	cycleName := req.PathValue("cycle")
 	cycle := endoflife.GetCycle(productName, cycleName)
+	feed := feed.FeedCycle(strings.Split(req.Host, ":")[0], productName, cycle)
+	writeFeed(w, feed)
+}
+
+func writeFeed(w http.ResponseWriter, feed string) {
 	w.Header().Add("content-type", "application/atom+xml; charset=UTF-8")
-	//cycle.print(w)
-	feed := feed.FeedCycle(productName, cycle)
 	fmt.Fprintln(w, feed)
 }
