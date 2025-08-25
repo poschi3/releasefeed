@@ -15,7 +15,6 @@ func main() {
 }
 
 func handleProduct(w http.ResponseWriter, req *http.Request) {
-	// TODO sanitation
 	productName := req.PathValue("product")
 	product := endoflife.GetProduct(productName)
 	feed := feed.FeedProduct(strings.Split(req.Host, ":")[0], productName, product)
@@ -23,7 +22,6 @@ func handleProduct(w http.ResponseWriter, req *http.Request) {
 }
 
 func handleCycle(w http.ResponseWriter, req *http.Request) {
-	// TODO sanitation
 	productName := req.PathValue("product")
 	cycleName := req.PathValue("cycle")
 	cycle := endoflife.GetCycle(productName, cycleName)

@@ -83,9 +83,7 @@ func FeedCycle(host string, productName string, cycle endoflife.Cycle) string {
 		return "" // TODO was machen
 	}
 
-	// TODO
-	// <?xml version="1.0" encoding="utf-8"?>
-	return string(output)
+	return xml.Header + string(output)
 }
 
 func FeedProduct(host string, productName string, product endoflife.Product) string {
@@ -111,9 +109,7 @@ func FeedProduct(host string, productName string, product endoflife.Product) str
 		return "" // TODO was machen
 	}
 
-	// TODO
-	// <?xml version="1.0" encoding="utf-8"?>
-	return string(output)
+	return xml.Header + string(output)
 }
 
 func createCycleEntry(host string, productName string, cycle endoflife.Cycle) Entry {

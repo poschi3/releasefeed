@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -76,7 +77,8 @@ type Cycle struct {
 type Product []Cycle
 
 func GetProduct(product string) Product {
-	resp, err := http.Get(baseUrl + product + ".json")
+	escapedProduct := url.PathEscape(product)
+	resp, err := http.Get(baseUrl + escapedProduct + ".json")
 	if err != nil {
 		panic(err)
 	}
@@ -93,8 +95,10 @@ func GetProduct(product string) Product {
 	return myProduct
 }
 
-func GetCycle(product string, cicle string) Cycle {
-	resp, err := http.Get(baseUrl + product + "/" + cicle + ".json")
+func GetCycle(product string, cycle string) Cycle {
+	escapedProduct := url.PathEscape(product)
+	escapedCycle := url.PathEscape(cycle)
+	resp, err := http.Get(baseUrl + escapedProduct + "/" + escapedCycle + ".json")
 	if err != nil {
 		panic(err)
 	}
@@ -102,16 +106,16 @@ func GetCycle(product string, cicle string) Cycle {
 
 	log.Println("Response status:", resp.Status)
 
-	myCicle := Cycle{}
-	err = json.NewDecoder(resp.Body).Decode(&myCicle)
+	myCycle := Cycle{}
+	err = json.NewDecoder(resp.Body).Decode(&myCycle)
 	if err != nil {
 		panic(err) // TODO
 	}
 
-	if myCicle.Cycle == "" {
-		myCicle.Cycle = cicle
+	if myCycle.Cycle == "" {
+		myCycle.Cycle = cycle
 	}
-	// myCicle.print(os.Stdout)
-	// log.Println(myCicle.LatestReleaseDate.Time)
-	return myCicle
+	// myCycle.print(os.Stdout)
+	// log.Println(myCycle.LatestReleaseDate.Time)
+	return myCycle
 }
