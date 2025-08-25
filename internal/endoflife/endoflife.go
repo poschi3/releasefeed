@@ -76,40 +76,56 @@ type Cycle struct {
 
 type Product []Cycle
 
-func GetProduct(product string) Product {
+func GetProduct(product string) (Product, error) {
 	escapedProduct := url.PathEscape(product)
 	resp, err := http.Get(baseUrl + escapedProduct + ".json")
 	if err != nil {
-		panic(err)
+		return Product{}, fmt.Errorf("internal error: %s", err)
 	}
 	defer resp.Body.Close()
 
 	log.Println("Response status:", resp.Status)
+
+	if resp.StatusCode == http.StatusNotFound {
+		return Product{}, fmt.Errorf("product not found")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return Product{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
 
 	myProduct := Product{}
 	err = json.NewDecoder(resp.Body).Decode(&myProduct)
 	if err != nil {
-		panic(err)
+		return Product{}, fmt.Errorf("error decoding json: %s", err)
 	}
 	// myProduct.print(os.Stdout)
-	return myProduct
+	return myProduct, nil
 }
 
-func GetCycle(product string, cycle string) Cycle {
+func GetCycle(product string, cycle string) (Cycle, error) {
 	escapedProduct := url.PathEscape(product)
 	escapedCycle := url.PathEscape(cycle)
 	resp, err := http.Get(baseUrl + escapedProduct + "/" + escapedCycle + ".json")
 	if err != nil {
-		panic(err)
+		return Cycle{}, fmt.Errorf("internal error: %s", err)
 	}
 	defer resp.Body.Close()
 
 	log.Println("Response status:", resp.Status)
 
+	if resp.StatusCode == http.StatusNotFound {
+		return Cycle{}, fmt.Errorf("product or cycle not found")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return Cycle{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
 	myCycle := Cycle{}
 	err = json.NewDecoder(resp.Body).Decode(&myCycle)
 	if err != nil {
-		panic(err) // TODO
+		return Cycle{}, fmt.Errorf("error decoding json: %s", err)
 	}
 
 	if myCycle.Cycle == "" {
@@ -117,5 +133,5 @@ func GetCycle(product string, cycle string) Cycle {
 	}
 	// myCycle.print(os.Stdout)
 	// log.Println(myCycle.LatestReleaseDate.Time)
-	return myCycle
+	return myCycle, nil
 }

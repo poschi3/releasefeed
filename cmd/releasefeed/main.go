@@ -16,16 +16,32 @@ func main() {
 
 func handleProduct(w http.ResponseWriter, req *http.Request) {
 	productName := req.PathValue("product")
-	product := endoflife.GetProduct(productName)
-	feed := feed.FeedProduct(strings.Split(req.Host, ":")[0], productName, product)
+	product, err := endoflife.GetProduct(productName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	feed, err := feed.FeedProduct(strings.Split(req.Host, ":")[0], productName, product)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	writeFeed(w, feed)
 }
 
 func handleCycle(w http.ResponseWriter, req *http.Request) {
 	productName := req.PathValue("product")
 	cycleName := req.PathValue("cycle")
-	cycle := endoflife.GetCycle(productName, cycleName)
-	feed := feed.FeedCycle(strings.Split(req.Host, ":")[0], productName, cycle)
+	cycle, err := endoflife.GetCycle(productName, cycleName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	feed, err := feed.FeedCycle(strings.Split(req.Host, ":")[0], productName, cycle)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	writeFeed(w, feed)
 }
 

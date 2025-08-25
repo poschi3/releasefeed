@@ -3,7 +3,6 @@ package feed
 import (
 	"encoding/xml"
 	"fmt"
-	"log"
 	"poschi3/releasefeed/internal/endoflife"
 	"time"
 )
@@ -66,7 +65,7 @@ type Link struct {
 	Href string `xml:"href,attr"`
 }
 
-func FeedCycle(host string, productName string, cycle endoflife.Cycle) string {
+func FeedCycle(host string, productName string, cycle endoflife.Cycle) (string, error) {
 	feed := Feed{
 		Author:  Author{Name: "ReleaseFeed"},
 		Title:   fmt.Sprintf("%s (%s)", productName, cycle.Cycle),
@@ -79,14 +78,13 @@ func FeedCycle(host string, productName string, cycle endoflife.Cycle) string {
 
 	output, err := xml.MarshalIndent(feed, "", "  ")
 	if err != nil {
-		log.Printf("Error encoding XML: %v\n", err)
-		return "" // TODO was machen
+		return "", fmt.Errorf("error encoding XML: %w", err)
 	}
 
-	return xml.Header + string(output)
+	return xml.Header + string(output), nil
 }
 
-func FeedProduct(host string, productName string, product endoflife.Product) string {
+func FeedProduct(host string, productName string, product endoflife.Product) (string, error) {
 	feed := Feed{
 		Author: Author{Name: "ReleaseFeed"},
 		Title:  productName,
@@ -105,11 +103,10 @@ func FeedProduct(host string, productName string, product endoflife.Product) str
 
 	output, err := xml.MarshalIndent(feed, "", "  ")
 	if err != nil {
-		log.Printf("Error encoding XML: %v\n", err)
-		return "" // TODO was machen
+		return "", fmt.Errorf("error encoding XML: %w", err)
 	}
 
-	return xml.Header + string(output)
+	return xml.Header + string(output), nil
 }
 
 func createCycleEntry(host string, productName string, cycle endoflife.Cycle) Entry {
