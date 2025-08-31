@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"poschi3/releasefeed/internal/endoflife"
 	"poschi3/releasefeed/internal/feed"
 	"strings"
@@ -11,7 +12,11 @@ import (
 func main() {
 	http.HandleFunc("/{product}", handleProduct)
 	http.HandleFunc("/{product}/{cycle}", handleCycle)
-	http.ListenAndServe(":8090", nil)
+	addr := os.Getenv("RELEASEFEED_LISTEN_ADDR")
+	if addr == "" {
+		addr = "127.0.0.1:8090"
+	}
+	http.ListenAndServe(addr, nil)
 }
 
 func handleProduct(w http.ResponseWriter, req *http.Request) {
