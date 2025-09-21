@@ -70,7 +70,7 @@ func FeedCycle(host string, productName string, cycle endoflife.Cycle) (string, 
 		Author:  Author{Name: "ReleaseFeed"},
 		Title:   fmt.Sprintf("%s (%s)", productName, cycle.Cycle),
 		Id:      getCycleTag(host, productName, cycle),
-		Updated: FeedTimeformat{Time: cycle.LatestReleaseDate.Time},
+		Updated: FeedTimeformat{Time: cycle.LatestOrCycleDate()},
 		Entries: []Entry{
 			createCycleEntry(host, productName, cycle),
 		},
@@ -85,6 +85,17 @@ func FeedCycle(host string, productName string, cycle endoflife.Cycle) (string, 
 }
 
 func FeedProduct(host string, productName string, product endoflife.Product) (string, error) {
+	feed := createProductFeed(productName, host, product)
+
+	output, err := xml.MarshalIndent(feed, "", "  ")
+	if err != nil {
+		return "", fmt.Errorf("error encoding XML: %w", err)
+	}
+
+	return xml.Header + string(output), nil
+}
+
+func createProductFeed(productName string, host string, product endoflife.Product) Feed {
 	feed := Feed{
 		Author: Author{Name: "ReleaseFeed"},
 		Title:  productName,
@@ -95,35 +106,29 @@ func FeedProduct(host string, productName string, product endoflife.Product) (st
 	for _, cycle := range product {
 		feedCycle := createCycleEntry(host, productName, cycle)
 		feed.Entries = append(feed.Entries, feedCycle)
-		if cycle.LatestReleaseDate.Time.After(latestUpdate) {
-			latestUpdate = cycle.LatestReleaseDate.Time
+		if cycle.LatestOrCycleDate().After(latestUpdate) {
+			latestUpdate = cycle.LatestOrCycleDate()
 		}
 	}
 	feed.Updated = FeedTimeformat{Time: latestUpdate}
-
-	output, err := xml.MarshalIndent(feed, "", "  ")
-	if err != nil {
-		return "", fmt.Errorf("error encoding XML: %w", err)
-	}
-
-	return xml.Header + string(output), nil
+	return feed
 }
 
 func createCycleEntry(host string, productName string, cycle endoflife.Cycle) Entry {
 	summary := fmt.Sprintf(
 		"%s %s updated to %s (%s). Support until %s",
-		productName, cycle.Cycle, cycle.Latest, cycle.LatestReleaseDate.Time.Format("2006-01-02"), cycle.Eol.AsString(),
+		productName, cycle.Cycle, cycle.LatestOrCycleName(), cycle.LatestOrCycleDate().Format("2006-01-02"), cycle.Eol.AsString(),
 	)
 
 	return Entry{
-		Title:   cycle.Latest,
+		Title:   cycle.LatestOrCycleName(),
 		Id:      getCycleTag(host, productName, cycle),
 		Link:    Link{Href: baseUri + productName},
 		Summary: summary,
-		Updated: FeedTimeformat{Time: cycle.LatestReleaseDate.Time},
+		Updated: FeedTimeformat{Time: cycle.LatestOrCycleDate()},
 	}
 }
 
 func getCycleTag(host string, productName string, cycle endoflife.Cycle) string {
-	return "tag:" + host + "," + cycle.LatestReleaseDate.Time.Format("2006-01-02") + ":" + productName + ":" + cycle.Latest
+	return "tag:" + host + "," + cycle.LatestOrCycleDate().Format("2006-01-02") + ":" + productName + ":" + cycle.LatestOrCycleName()
 }

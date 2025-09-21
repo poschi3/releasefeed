@@ -64,14 +64,29 @@ func (cd *CustomDate) UnmarshalJSON(b []byte) error {
 
 type Cycle struct {
 	Cycle             string       // The release cycle which this release is part of. e.g. 1.39
-	ReleaseDate       string       // Release date for the first release in this cycle.
+	ReleaseDate       CustomDate   // Release date for the first release in this cycle.
 	Eol               BoolOrString // End-of-Life date for this release cycle.
 	Latest            string       // Latest release in this cycle.
-	LatestReleaseDate CustomDate   // Release date for the latest release in this cycle.
+	LatestReleaseDate *CustomDate  // Release date for the latest release in this cycle.
 	Link              string       // Link to changelog for the latest release in this cycle, or null if unavailable.
 	// Lts          bool // Whether this release cycle has long-term-support (LTS), or the date it entered LTS status.
 	// Support      string // Whether this release cycle has active support.
 	// Discontinued string // Whether this device version is no longer in production.
+}
+
+func (cycle *Cycle) LatestOrCycleName() string {
+	if cycle.Latest != "" {
+		return cycle.Latest
+	}
+	return cycle.Cycle
+}
+
+func (cycle *Cycle) LatestOrCycleDate() time.Time {
+	if cycle.LatestReleaseDate != nil {
+		return cycle.LatestReleaseDate.Time
+	} else {
+		return cycle.ReleaseDate.Time
+	}
 }
 
 type Product []Cycle
