@@ -1,7 +1,7 @@
 let pkgs = import <nixpkgs> { };
 in pkgs.buildGoModule rec {
   pname = "releasefeed";
-  version = "0.0.2";
+  version = "0.0.3-snapshot";
   src = pkgs.lib.cleanSource ./.;
   vendorHash = null;
 
