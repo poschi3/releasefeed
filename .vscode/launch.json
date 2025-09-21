@@ -9,7 +9,10 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "cmd/releasefeed"
+            "program": "cmd/releasefeed",
+            "env": {
+                "RELEASEFEED_LOG_LEVEL": "debug"
+            }
         }
     ]
 }

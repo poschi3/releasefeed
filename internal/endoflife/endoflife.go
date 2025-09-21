@@ -3,7 +3,7 @@ package endoflife
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -99,7 +99,7 @@ func GetProduct(product string) (Product, error) {
 	}
 	defer resp.Body.Close()
 
-	log.Println("Response status:", resp.Status)
+	slog.Debug("Response", "product", product, "status", resp.Status)
 
 	if resp.StatusCode == http.StatusNotFound {
 		return Product{}, fmt.Errorf("product not found")
@@ -114,7 +114,6 @@ func GetProduct(product string) (Product, error) {
 	if err != nil {
 		return Product{}, fmt.Errorf("error decoding json: %s", err)
 	}
-	// myProduct.print(os.Stdout)
 	return myProduct, nil
 }
 
@@ -127,7 +126,7 @@ func GetCycle(product string, cycle string) (Cycle, error) {
 	}
 	defer resp.Body.Close()
 
-	log.Println("Response status:", resp.Status)
+	slog.Debug("Response", "product", product, "status", "cycle", cycle, resp.Status)
 
 	if resp.StatusCode == http.StatusNotFound {
 		return Cycle{}, fmt.Errorf("product or cycle not found")
@@ -146,7 +145,5 @@ func GetCycle(product string, cycle string) (Cycle, error) {
 	if myCycle.Cycle == "" {
 		myCycle.Cycle = cycle
 	}
-	// myCycle.print(os.Stdout)
-	// log.Println(myCycle.LatestReleaseDate.Time)
 	return myCycle, nil
 }
