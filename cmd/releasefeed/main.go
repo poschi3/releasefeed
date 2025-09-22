@@ -7,6 +7,7 @@ import (
 	"os"
 	"poschi3/releasefeed/internal/endoflife"
 	"poschi3/releasefeed/internal/feed"
+	"poschi3/releasefeed/web"
 	"strings"
 
 	"github.com/go-chi/chi"
@@ -50,6 +51,7 @@ func (s *Server) MountHandlers() {
 	s.Router.Use(middleware.Compress(5, "application/atom+xml"))
 
 	// Mount all handlers here
+	s.Router.Get("/favicon.ico", handleFavicon)
 	s.Router.Get("/{product}", handleRedirectProduct)
 	s.Router.Get("/{product}/{cycle}", handleRedirectCycle)
 	s.Router.Get("/feeds/{product}", handleProduct)
@@ -77,11 +79,13 @@ func handleProduct(w http.ResponseWriter, req *http.Request) {
 	productName := chi.URLParam(req, "product")
 	product, err := endoflife.GetProduct(productName)
 	if err != nil {
+		slog.Error("Error getting product", "product", productName, "error", err)
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 	feed, err := feed.FeedProduct(strings.Split(req.Host, ":")[0], productName, product)
 	if err != nil {
+		slog.Error("Error creating feed", "product", productName, "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -104,15 +108,28 @@ func handleCycle(w http.ResponseWriter, req *http.Request) {
 	cycleName := chi.URLParam(req, "cycle")
 	cycle, err := endoflife.GetCycle(productName, cycleName)
 	if err != nil {
+		slog.Error("Error getting cycle", "product", productName, "cycle", cycleName, "error", err)
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 	feed, err := feed.FeedCycle(strings.Split(req.Host, ":")[0], productName, cycle)
 	if err != nil {
+		slog.Error("Error creating feed", "product", productName, "cycle", cycleName, "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	writeFeed(w, feed)
+}
+
+func handleFavicon(w http.ResponseWriter, req *http.Request) {
+	content, err := web.Files.ReadFile("static/favicon.ico")
+	if err != nil {
+		slog.Error("Error reading favicon", "error", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Add("content-type", "image/x-icon")
+	w.Write(content)
 }
 
 func writeFeed(w http.ResponseWriter, feed string) {
