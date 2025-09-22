@@ -15,30 +15,43 @@ import (
 
 func main() {
 	configureLogger()
-
 	slog.Info("Releasefeed started")
 
-	configureMiddlewareLogger()
+	s := CreateNewServer()
+	s.MountHandlers()
 
-	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-
-	if os.Getenv("RELEASEFEED_MIDDLEWARE_REALIP") == "true" {
-		r.Use(middleware.RealIP)
-	}
-
-	r.Get("/{product}", handleProduct)
-	r.Get("/{product}/{cycle}", handleCycle)
-	addr := os.Getenv("RELEASEFEED_LISTEN_ADDR")
-	if addr == "" {
-		addr = "127.0.0.1:8090"
-	}
-	http.ListenAndServe(addr, r)
+	http.ListenAndServe(s.Addr, s.Router)
 }
 
-func configureMiddlewareLogger() {
+type Server struct {
+	Router *chi.Mux
+	Addr   string
+}
+
+func CreateNewServer() *Server {
+	s := &Server{}
+	s.Router = chi.NewRouter()
+
+	s.Addr = os.Getenv("RELEASEFEED_LISTEN_ADDR")
+	if s.Addr == "" {
+		s.Addr = "127.0.0.1:8090"
+	}
+	return s
+}
+
+func (s *Server) MountHandlers() {
+	// Mount all Middleware here
+	if os.Getenv("RELEASEFEED_MIDDLEWARE_REALIP") == "true" {
+		s.Router.Use(middleware.RealIP)
+	}
 	middlewareLogger := slog.NewLogLogger(slog.Default().Handler(), slog.LevelInfo)
 	middleware.DefaultLogger = middleware.RequestLogger(&middleware.DefaultLogFormatter{Logger: middlewareLogger})
+	s.Router.Use(middleware.Logger)
+	s.Router.Use(middleware.Compress(5, "application/atom+xml"))
+
+	// Mount all handlers here
+	s.Router.Get("/{product}", handleProduct)
+	s.Router.Get("/{product}/{cycle}", handleCycle)
 }
 
 func configureLogger() {

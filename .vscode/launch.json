@@ -11,7 +11,8 @@
             "mode": "auto",
             "program": "cmd/releasefeed",
             "env": {
-                "RELEASEFEED_LOG_LEVEL": "debug"
+                "RELEASEFEED_LOG_LEVEL": "debug",
+                "RELEASEFEED_MIDDLEWARE_REALIP": "true"
             }
         }
     ]
