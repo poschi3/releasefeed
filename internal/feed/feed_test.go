@@ -41,6 +41,7 @@ func TestNixos(t *testing.T) {
 		t.Error(err)
 	}
 
+	assert.Equal(t, "https://localhost/feeds/nixos", feed.Id)
 	assert.Equal(t, "25.05", feed.Entries[0].Title)
 	assert.Equal(t, "https://endoflife.date/nixos", feed.Entries[0].Link.Href)
 	assert.Equal(t, "tag:localhost,2025-05-23:nixos:25.05", feed.Entries[0].Id)
@@ -56,6 +57,7 @@ func TestMediawiki(t *testing.T) {
 		t.Error(err)
 	}
 
+	assert.Equal(t, "https://localhost/feeds/mediawiki", feed.Id)
 	assert.Equal(t, "1.43.3", feed.Entries[1].Title)
 	assert.Equal(t, "https://endoflife.date/mediawiki", feed.Entries[1].Link.Href)
 	assert.Equal(t, "tag:localhost,2025-07-01:mediawiki:1.43.3", feed.Entries[1].Id)
@@ -65,12 +67,29 @@ func TestMediawiki(t *testing.T) {
 	assert.Equal(t, "mediawiki 1.43 updated to 1.43.3 (2025-07-01). Support until 2027-12-31", feed.Entries[1].Summary)
 }
 
+func TestMediawiki_1_39(t *testing.T) {
+	feed, err := convertToCycleFeed("mediawiki", "1.39")
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, "tag:localhost,2025-06-30:mediawiki:1.39.13", feed.Id)
+	assert.Equal(t, "1.39.13", feed.Entries[0].Title)
+	assert.Equal(t, "https://endoflife.date/mediawiki", feed.Entries[0].Link.Href)
+	assert.Equal(t, "tag:localhost,2025-06-30:mediawiki:1.39.13", feed.Entries[0].Id)
+	assert.Equal(t, FeedTimeformat{
+		Time: time.Date(2025, 6, 30, 0, 0, 0, 0, time.UTC),
+	}, feed.Entries[0].Updated)
+	assert.Equal(t, "mediawiki  updated to 1.39.13 (2025-06-30). Support until 2025-12-31", feed.Entries[0].Summary)
+}
+
 func TestJiraSoftware(t *testing.T) {
 	feed, err := convertToProductFeed("jira-software")
 	if err != nil {
 		t.Error(err)
 	}
 
+	assert.Equal(t, "https://localhost/feeds/jira-software", feed.Id)
 	assert.Equal(t, "11.0.1", feed.Entries[0].Title)
 	assert.Equal(t, "https://endoflife.date/jira-software", feed.Entries[0].Link.Href)
 	assert.Equal(t, "tag:localhost,2025-09-04:jira-software:11.0.1", feed.Entries[0].Id)
@@ -92,5 +111,20 @@ func convertToProductFeed(productName string) (Feed, error) {
 	}
 
 	feed := createProductFeed(productName, "localhost", product)
+	return feed, nil
+}
+
+func convertToCycleFeed(productName string, version string) (Feed, error) {
+	fileContent, err := testdata.GetFileContent("endoflive", productName+"-"+version+".json")
+	if err != nil {
+		return Feed{}, err
+	}
+	var cycle endoflife.Cycle
+	err = json.Unmarshal(fileContent, &cycle)
+	if err != nil {
+		return Feed{}, err
+	}
+
+	feed := createCycleFeed(productName, "localhost", cycle)
 	return feed, nil
 }
