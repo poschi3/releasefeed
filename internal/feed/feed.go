@@ -66,15 +66,7 @@ type Link struct {
 }
 
 func FeedCycle(host string, productName string, cycle endoflife.Cycle) (string, error) {
-	feed := Feed{
-		Author:  Author{Name: "ReleaseFeed"},
-		Title:   fmt.Sprintf("%s (%s)", productName, cycle.Cycle),
-		Id:      getCycleTag(host, productName, cycle),
-		Updated: FeedTimeformat{Time: cycle.LatestOrCycleDate()},
-		Entries: []Entry{
-			createCycleEntry(host, productName, cycle),
-		},
-	}
+	feed := createCycleFeed(productName, host, cycle)
 
 	output, err := xml.MarshalIndent(feed, "", "  ")
 	if err != nil {
@@ -82,6 +74,18 @@ func FeedCycle(host string, productName string, cycle endoflife.Cycle) (string, 
 	}
 
 	return xml.Header + string(output), nil
+}
+
+func createCycleFeed(productName string, host string, cycle endoflife.Cycle) Feed {
+	return Feed{
+		Author:  Author{Name: "ReleaseFeed"},
+		Title:   fmt.Sprintf("%s (%s)", productName, cycle.Cycle),
+		Id:      getCycleTag(host, productName, cycle), // TODO link like product feed
+		Updated: FeedTimeformat{Time: cycle.LatestOrCycleDate()},
+		Entries: []Entry{
+			createCycleEntry(host, productName, cycle),
+		},
+	}
 }
 
 func FeedProduct(host string, productName string, product endoflife.Product) (string, error) {
@@ -99,7 +103,7 @@ func createProductFeed(productName string, host string, product endoflife.Produc
 	feed := Feed{
 		Author: Author{Name: "ReleaseFeed"},
 		Title:  productName,
-		Id:     "https://" + host + "/" + productName,
+		Id:     "https://" + host + "/feeds/" + productName,
 	}
 
 	var latestUpdate time.Time
@@ -118,7 +122,7 @@ func createCycleEntry(host string, productName string, cycle endoflife.Cycle) En
 	summary := fmt.Sprintf(
 		"%s %s updated to %s (%s). Support until %s",
 		productName, cycle.Cycle, cycle.LatestOrCycleName(), cycle.LatestOrCycleDate().Format("2006-01-02"), cycle.Eol.AsString(),
-	)
+	) // TODO cycle.Cycle may be empty
 
 	return Entry{
 		Title:   cycle.LatestOrCycleName(),

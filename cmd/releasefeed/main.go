@@ -50,8 +50,10 @@ func (s *Server) MountHandlers() {
 	s.Router.Use(middleware.Compress(5, "application/atom+xml"))
 
 	// Mount all handlers here
-	s.Router.Get("/{product}", handleProduct)
-	s.Router.Get("/{product}/{cycle}", handleCycle)
+	s.Router.Get("/{product}", handleRedirectProduct)
+	s.Router.Get("/{product}/{cycle}", handleRedirectCycle)
+	s.Router.Get("/feeds/{product}", handleProduct)
+	s.Router.Get("/feeds/{product}/{cycle}", handleCycle)
 }
 
 func configureLogger() {
@@ -84,6 +86,17 @@ func handleProduct(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	writeFeed(w, feed)
+}
+
+func handleRedirectProduct(w http.ResponseWriter, req *http.Request) {
+	productName := chi.URLParam(req, "product")
+	http.Redirect(w, req, "/feeds/"+productName, http.StatusMovedPermanently)
+}
+
+func handleRedirectCycle(w http.ResponseWriter, req *http.Request) {
+	productName := chi.URLParam(req, "product")
+	cycleName := chi.URLParam(req, "cycle")
+	http.Redirect(w, req, "/feeds/"+productName+"/"+cycleName, http.StatusMovedPermanently)
 }
 
 func handleCycle(w http.ResponseWriter, req *http.Request) {

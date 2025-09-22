@@ -18,7 +18,7 @@ func TestHandleProduct(t *testing.T) {
 	s := CreateNewServer()
 	s.MountHandlers()
 
-	req, _ := http.NewRequest("GET", "/mediawiki", nil)
+	req, _ := http.NewRequest("GET", "/feeds/mediawiki", nil)
 	response := executeRequest(req, s)
 	require.Equal(t, http.StatusOK, response.Code)
 
@@ -32,7 +32,7 @@ func TestHhandleCycle(t *testing.T) {
 	s := CreateNewServer()
 	s.MountHandlers()
 
-	req, _ := http.NewRequest("GET", "/mediawiki/1.31", nil)
+	req, _ := http.NewRequest("GET", "/feeds/mediawiki/1.31", nil)
 	response := executeRequest(req, s)
 	require.Equal(t, http.StatusOK, response.Code)
 
