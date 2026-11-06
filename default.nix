@@ -1,5 +1,5 @@
-let pkgs = import <nixpkgs> { };
-in pkgs.buildGoModule rec {
+{ pkgs ? import <nixpkgs> { } }:
+pkgs.buildGoModule rec {
   pname = "releasefeed";
   version = "0.0.8-snapshot";
   src = pkgs.lib.cleanSource ./.;
